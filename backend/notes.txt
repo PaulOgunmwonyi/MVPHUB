@@ -1,0 +1,18 @@
+1. brew install python@3.12
+2. python3.12 -m venv venv
+3. source venv/bin/activate
+4. pip install flask 
+5. Create requirements.txt
+
+
+Repeat:
+1. pip freeze > requirements.txt
+2. pip install -r requirements.txt
+
+- python app.py
+
+
+NFL data collected from:
+- https://pypi.org/project/nfl-data-py/
+- REQUIRES PYTHON VERSION < 13
+- https://rowzero.io/blog/nfl-data-py-in-a-spreadsheet-nfl-stats
