@@ -1,6 +1,7 @@
 "use client";
-import React, { useState, useEffect, ChangeEvent, FormEvent } from "react";
+import React, { useState, ChangeEvent, FormEvent } from "react";
 import axios from "axios";
+import Header from "./components/Header";
 
 type InputFields = {
   wins: string;
@@ -32,57 +33,9 @@ const initialInput: InputFields = {
   rushing_tds: "",
 };
 
-type Player = {
-  season: number;
-  name_first: string;
-  name_last: string;
-  team: string;
-  wins: number;
-  losses: number;
-  passing_yards: number;
-  passing_tds: number;
-  interceptions: number;
-  rushing_yards: number;
-  rushing_tds: number;
-  passer_rating: number;
-  qbr_total: number;
-  epa_total: number;
-  qb_plays: number;
-  epa_per_play: number;
-  sacks: number;
-  mvp: number;
-};
-
-type Record = {
-  team: string;
-  year: number;
-  wins: number;
-  losses: number;
-};
-
 export default function HomePage() {
   const [input, setInput] = useState<InputFields>(initialInput);
   const [prediction, setPrediction] = useState<string>("Input values for a prediction!");
-  const [mvpData, setMvpData] = useState<Player[]>([]);
-  const [recordData, setRecordData] = useState<Record[]>([]);
-
-  useEffect(() => {
-    axios
-      .get("http://localhost:5001/data")
-      .then((res) => {
-        const allData: Player[] = res.data;
-        setMvpData(allData.filter((player) => player.mvp === 1));
-        setRecordData(
-          allData.map((player) => ({
-            team: player.team,
-            year: player.season,
-            wins: player.wins,
-            losses: player.losses,
-          }))
-        );
-      })
-      .catch(() => setMvpData([]));
-  }, []);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     setInput({ ...input, [e.target.name]: e.target.value });
@@ -119,6 +72,30 @@ export default function HomePage() {
         padding: 0 
       }}>
         <div style={{ padding: "3rem 2rem" }}>
+          <h1 style={{ 
+            color: "#1e3c72", 
+            textAlign: "center", 
+            fontSize: "3rem", 
+            marginBottom: "1rem",
+            fontWeight: "900",
+            letterSpacing: "2px",
+            textShadow: "2px 2px 4px rgba(30, 60, 114, 0.2)"
+          }}>
+            NFL MVP Predictor
+          </h1>
+          <p style={{ 
+            color: "#2a5298", 
+            fontSize: "1.2rem", 
+            maxWidth: 800, 
+            margin: "0 auto 3rem auto", 
+            lineHeight: 1.8, 
+            textAlign: "center",
+            fontWeight: "400"
+          }}>
+            Enter quarterback statistics to predict their likelihood of winning the NFL MVP award. 
+            The machine learning model analyzes key performance metrics to determine MVP probability 
+            based on historical data from the past 7 seasons.
+          </p>
           <div className="container" style={{ 
             backgroundColor: "#ffffff", 
             padding: "3rem", 

@@ -36,3 +36,5 @@ threadpoolctl==3.6.0
 tzdata==2025.2
 wheel==0.45.1
 Flask-Cors
+shap
+openai

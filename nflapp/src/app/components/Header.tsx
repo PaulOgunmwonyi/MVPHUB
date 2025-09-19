@@ -7,10 +7,10 @@ const Header = () => {
   const pathname = usePathname();
 
   const handleHomeNavigate = () => {
-    router.push("../");
+    router.push("/");
   };
 
-  const handlePredictorNavigate = () => {
+  const handlePastWinnersNavigate = () => {
     router.push("/past-winners");
   };
 
@@ -84,10 +84,10 @@ const Header = () => {
           MVP Predictor
         </button>
         <button
-          onClick={handlePredictorNavigate}
+          onClick={handlePastWinnersNavigate}
           style={{
-            backgroundColor: pathname === "/mvp-predictor" ? "#ffffff" : "transparent",
-            color: pathname === "/mvp-predictor" ? "#1e3c72" : "#ffffff",
+            backgroundColor: pathname === "/past-winners" ? "#ffffff" : "transparent",
+            color: pathname === "/past-winners" ? "#1e3c72" : "#ffffff",
             border: "2px solid #ffffff",
             padding: "0.75rem 1.5rem",
             borderRadius: "8px",
