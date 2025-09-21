@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, ChangeEvent, FormEvent } from "react";
 import axios from "axios";
-import Header from "./components/Header";
+import ChatInterface from "./components/ChatInterface";
 
 type InputFields = {
   wins: string;
@@ -36,6 +36,8 @@ const initialInput: InputFields = {
 export default function HomePage() {
   const [input, setInput] = useState<InputFields>(initialInput);
   const [prediction, setPrediction] = useState<string>("Input values for a prediction!");
+  const [predictionData, setPredictionData] = useState<any>(null);
+  const [explanationData, setExplanationData] = useState<any>(null);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     setInput({ ...input, [e.target.name]: e.target.value });
@@ -44,17 +46,22 @@ export default function HomePage() {
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
-      const res = await axios.post("http://localhost:5001/predict", {
-        ...Object.fromEntries(
-          Object.entries(input).map(([k, v]) => [k, parseFloat(v)])
-        ),
-      });
+      const numericInput = Object.fromEntries(
+        Object.entries(input).map(([k, v]) => [k, parseFloat(v)])
+      );
+      
+      const res = await axios.post("http://localhost:5001/predict", numericInput);
+      
       if (res.data && typeof res.data.mvp !== "undefined") {
         setPrediction(
           res.data.mvp
-            ? "That is high enough and they would likely win MVP"
-            : "That is not high enough and they would likely not win MVP"
+            ? `That is high enough and they would likely win MVP (${(res.data.probability * 100).toFixed(1)}% confidence)`
+            : `That is not high enough and they would likely not win MVP (${(res.data.probability * 100).toFixed(1)}% confidence)`
         );
+        
+        // Store data for chat
+        setPredictionData(numericInput);
+        setExplanationData(res.data.explanation);
       } else {
         setPrediction("Prediction unavailable.");
       }
@@ -64,143 +71,146 @@ export default function HomePage() {
   };
 
   return (
-    <div>
+    <div style={{ 
+      fontFamily: "Arial, sans-serif", 
+      background: "linear-gradient(135deg, #e3f2fd 0%, #bbdefb 50%, #90caf9 100%)", 
+      minHeight: "100vh", 
+      padding: 0 
+    }}>
+      {/* Main Content Container */}
       <div style={{ 
-        fontFamily: "Arial, sans-serif", 
-        background: "linear-gradient(135deg, #e3f2fd 0%, #bbdefb 50%, #90caf9 100%)", 
-        minHeight: "100vh", 
-        padding: 0 
+        display: 'flex', 
+        gap: '2rem', 
+        padding: '2rem',
+        maxWidth: '1400px',
+        margin: '0 auto'
       }}>
-        <div style={{ padding: "3rem 2rem" }}>
-          <h1 style={{ 
-            color: "#1e3c72", 
-            textAlign: "center", 
-            fontSize: "3rem", 
-            marginBottom: "1rem",
-            fontWeight: "900",
-            letterSpacing: "2px",
-            textShadow: "2px 2px 4px rgba(30, 60, 114, 0.2)"
+        
+        {/* Left Side - Input Form */}
+        <div style={{ flex: 1, maxWidth: '800px' }}>
+          <div style={{
+            backgroundColor: "white",
+            borderRadius: "15px",
+            padding: "2rem",
+            boxShadow: "0 8px 25px rgba(30, 60, 114, 0.15)",
+            border: "2px solid #90caf9"
           }}>
-            NFL MVP Predictor
-          </h1>
-          <p style={{ 
-            color: "#2a5298", 
-            fontSize: "1.2rem", 
-            maxWidth: 800, 
-            margin: "0 auto 3rem auto", 
-            lineHeight: 1.8, 
-            textAlign: "center",
-            fontWeight: "400"
-          }}>
-            Enter quarterback statistics to predict their likelihood of winning the NFL MVP award. 
-            The machine learning model analyzes key performance metrics to determine MVP probability 
-            based on historical data from the past 7 seasons.
-          </p>
-          <div className="container" style={{ 
-            backgroundColor: "#ffffff", 
-            padding: "3rem", 
-            borderRadius: "20px", 
-            margin: "3rem auto", 
-            boxShadow: "0 20px 40px rgba(30, 60, 114, 0.15)", 
-            maxWidth: "1300px",
-            border: "1px solid #e1f5fe"
-          }}>
-            <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 25 }}>
-              <div className="form-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 25 }}>
-                {(Object.keys(initialInput) as Array<keyof InputFields>).map((key) => (
-                  <div className="form-group" style={{ display: "flex", flexDirection: "column", textAlign: "left" }} key={key}>
-                    <label htmlFor={key} style={{ 
-                      fontWeight: "bold", 
-                      marginBottom: 8, 
-                      color: "#1e3c72", 
-                      fontSize: "1.1rem",
-                      textTransform: "capitalize"
+            <h2 style={{
+              color: "#1e3c72",
+              textAlign: "center",
+              marginBottom: "2rem",
+              fontSize: "1.8rem",
+              fontWeight: "700"
+            }}>
+              Enter Quarterback Statistics
+            </h2>
+
+            <form onSubmit={handleSubmit}>
+              <div style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+                gap: "1.5rem",
+                marginBottom: "2rem"
+              }}>
+                {Object.entries(input).map(([key, value]) => (
+                  <div key={key}>
+                    <label style={{
+                      display: "block",
+                      marginBottom: "0.5rem",
+                      color: "#1e3c72",
+                      fontWeight: "600",
+                      fontSize: "0.9rem"
                     }}>
-                      {key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}:
+                      {key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())}:
                     </label>
                     <input
                       type="number"
-                      step={key === "epa_per_play" ? "0.0001" : key === "passer_rating" || key === "qbr_total" || key === "epa_total" ? "0.1" : "1"}
-                      id={key}
+                      step="any"
                       name={key}
-                      value={input[key]}
+                      value={value}
                       onChange={handleChange}
-                      required
-                      style={{ 
-                        padding: "14px 16px", 
-                        border: "2px solid #90caf9", 
-                        borderRadius: "10px", 
-                        fontSize: "1rem", 
-                        width: "100%", 
-                        boxSizing: "border-box",
-                        color: "#1e3c72",
-                        backgroundColor: "#f8fdff",
-                        transition: "all 0.3s ease",
-                        fontWeight: "500"
+                      style={{
+                        width: "100%",
+                        padding: "12px",
+                        border: "2px solid #e3f2fd",
+                        borderRadius: "8px",
+                        fontSize: "1rem",
+                        transition: "border-color 0.3s ease",
+                        outline: "none"
                       }}
-                      onFocus={(e) => {
-                        e.currentTarget.style.borderColor = "#1e3c72";
-                        e.currentTarget.style.backgroundColor = "#ffffff";
-                        e.currentTarget.style.boxShadow = "0 0 10px rgba(30, 60, 114, 0.2)";
-                      }}
-                      onBlur={(e) => {
-                        e.currentTarget.style.borderColor = "#90caf9";
-                        e.currentTarget.style.backgroundColor = "#f8fdff";
-                        e.currentTarget.style.boxShadow = "none";
-                      }}
+                      onFocus={(e) => e.target.style.borderColor = "#1e3c72"}
+                      onBlur={(e) => e.target.style.borderColor = "#e3f2fd"}
                     />
                   </div>
                 ))}
               </div>
-              <button 
-                type="submit" 
-                style={{ 
-                  padding: "16px 32px", 
-                  background: "linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)", 
-                  color: "#ffffff", 
-                  border: "none", 
-                  borderRadius: "12px", 
-                  fontSize: "1.2rem", 
-                  cursor: "pointer", 
+
+              <button
+                type="submit"
+                style={{
+                  width: "100%",
+                  padding: "15px",
+                  backgroundColor: "#1e3c72",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "8px",
+                  fontSize: "1.1rem",
+                  fontWeight: "600",
+                  cursor: "pointer",
                   transition: "all 0.3s ease",
-                  fontWeight: "bold",
-                  marginTop: "1.5rem",
-                  textTransform: "uppercase",
-                  letterSpacing: "1px",
-                  boxShadow: "0 8px 20px rgba(30, 60, 114, 0.3)"
+                  boxShadow: "0 4px 15px rgba(30, 60, 114, 0.3)"
                 }}
                 onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = "#2a5298";
                   e.currentTarget.style.transform = "translateY(-2px)";
-                  e.currentTarget.style.boxShadow = "0 12px 30px rgba(30, 60, 114, 0.4)";
                 }}
                 onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "#1e3c72";
                   e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow = "0 8px 20px rgba(30, 60, 114, 0.3)";
                 }}
               >
-                Predict MVP Probability
+                Predict MVP Chances
               </button>
             </form>
-            {prediction && (
-              <div style={{
-                marginTop: "2rem",
-                padding: "2rem",
-                backgroundColor: "#e3f2fd",
-                borderRadius: "15px",
-                border: "2px solid #90caf9",
-                textAlign: "center"
+
+            {/* Prediction Result */}
+            <div style={{
+              marginTop: "2rem",
+              padding: "1.5rem",
+              backgroundColor: "#f8f9ff",
+              borderRadius: "10px",
+              border: "2px solid #e3f2fd"
+            }}>
+              <h3 style={{
+                color: "#1e3c72",
+                marginBottom: "1rem",
+                fontSize: "1.3rem"
               }}>
-                <h2 style={{ 
-                  color: "#1e3c72", 
-                  fontSize: "1.8rem",
-                  fontWeight: "bold",
-                  margin: 0
-                }}>
-                  Prediction: {prediction}
-                </h2>
-              </div>
-            )}
+                Prediction Result:
+              </h3>
+              <p style={{
+                color: "#2c3e50",
+                fontSize: "1.1rem",
+                lineHeight: "1.5",
+                margin: 0
+              }}>
+                {prediction}
+              </p>
+            </div>
           </div>
+        </div>
+
+        {/* Right Side - Chat Interface */}
+        <div style={{ 
+          flexShrink: 0,
+          display: 'flex',
+          alignItems: 'flex-start',
+          paddingTop: '1rem'
+        }}>
+          <ChatInterface
+            predictionData={predictionData}
+            explanationData={explanationData}
+          />
         </div>
       </div>
     </div>
