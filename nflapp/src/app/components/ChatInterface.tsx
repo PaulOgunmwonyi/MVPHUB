@@ -12,14 +12,13 @@ interface Message {
 
 interface ChatInterfaceProps {
   predictionData?: any;
-  explanationData?: any;
 }
 
-export default function ChatInterface({ predictionData, explanationData }: ChatInterfaceProps) {
+export default function ChatInterface({ predictionData }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      text: "Hi! I'm your NFL MVP prediction assistant. I'll compare your stats to Josh Allen's 2024 MVP season. Make a prediction first, then ask me questions like 'How can I improve?' or 'Why is the prediction low?'",
+      text: "Hi! I'm your NFL MVP prediction assistant. Make a prediction first, then ask me questions like 'How can I improve?' or 'Why is the prediction low?'",
       sender: 'bot',
       type: 'general',
       timestamp: new Date()
@@ -228,7 +227,8 @@ export default function ChatInterface({ predictionData, explanationData }: ChatI
             border: '1px solid #90caf9',
             borderRadius: '20px',
             outline: 'none',
-            fontSize: '0.9rem'
+            fontSize: '0.9rem',
+            color: "#1e3c72", 
           }}
           disabled={isLoading}
         />

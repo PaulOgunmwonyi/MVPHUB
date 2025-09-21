@@ -37,7 +37,25 @@ export default function HomePage() {
   const [input, setInput] = useState<InputFields>(initialInput);
   const [prediction, setPrediction] = useState<string>("Input values for a prediction!");
   const [predictionData, setPredictionData] = useState<any>(null);
-  const [explanationData, setExplanationData] = useState<any>(null);
+
+  // Field descriptions and examples
+  const fieldInfo = {
+    wins: { description: "Number of games won by the team", example: "13" },
+    passing_yards: { description: "Total passing yards in the season", example: "4306" },
+    passing_tds: { description: "Total passing touchdowns thrown", example: "28" },
+    interceptions: { description: "Total interceptions thrown", example: "6" },
+    passer_rating: { description: "NFL passer rating (0-158.3)", example: "99.6" },
+    qbr_total: { description: "Total Quarterback Rating (0-100)", example: "68.2" },
+    epa_total: { description: "Expected Points Added total for the season", example: "85.4" },
+    epa_per_play: { description: "Expected Points Added per play", example: "0.142" },
+    qb_plays: { description: "Total number of QB plays (dropbacks)", example: "601" },
+    sacks: { description: "Number of times sacked", example: "23" },
+    rushing_yards: { description: "Total rushing yards by the QB", example: "523" },
+    rushing_tds: { description: "Total rushing touchdowns by the QB", example: "15" }
+  };
+
+  // Check if all fields are filled
+  const isFormValid = Object.values(input).every(value => value.trim() !== "");
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     setInput({ ...input, [e.target.name]: e.target.value });
@@ -55,13 +73,12 @@ export default function HomePage() {
       if (res.data && typeof res.data.mvp !== "undefined") {
         setPrediction(
           res.data.mvp
-            ? `That is high enough and they would likely win MVP (${(res.data.probability * 100).toFixed(1)}% confidence)`
-            : `That is not high enough and they would likely not win MVP (${(res.data.probability * 100).toFixed(1)}% confidence)`
+            ? `That is high enough and they would likely win MVP.`
+            : `That is not high enough and they would likely not win MVP.`
         );
         
         // Store data for chat
         setPredictionData(numericInput);
-        setExplanationData(res.data.explanation);
       } else {
         setPrediction("Prediction unavailable.");
       }
@@ -98,12 +115,29 @@ export default function HomePage() {
             <h2 style={{
               color: "#1e3c72",
               textAlign: "center",
-              marginBottom: "2rem",
+              marginBottom: "1rem",
               fontSize: "1.8rem",
               fontWeight: "700"
             }}>
               Enter Quarterback Statistics
             </h2>
+
+            <div style={{
+              backgroundColor: "#f0f9ff",
+              border: "1px solid #90caf9",
+              borderRadius: "8px",
+              padding: "1rem",
+              marginBottom: "2rem",
+              textAlign: "center"
+            }}>
+              <p style={{
+                color: "#1e3c72",
+                margin: 0,
+                fontSize: "0.9rem"
+              }}>
+                All fields are required. Hover over input fields for descriptions and examples.
+              </p>
+            </div>
 
             <form onSubmit={handleSubmit}>
               <div style={{
@@ -122,6 +156,7 @@ export default function HomePage() {
                       fontSize: "0.9rem"
                     }}>
                       {key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())}:
+                      <span style={{ color: "#e74c3c", marginLeft: "2px" }}>*</span>
                     </label>
                     <input
                       type="number"
@@ -129,6 +164,9 @@ export default function HomePage() {
                       name={key}
                       value={value}
                       onChange={handleChange}
+                      required
+                      title={`${fieldInfo[key as keyof typeof fieldInfo].description}. Example: ${fieldInfo[key as keyof typeof fieldInfo].example}`}
+                      placeholder={`e.g., ${fieldInfo[key as keyof typeof fieldInfo].example}`}
                       style={{
                         width: "100%",
                         padding: "12px",
@@ -136,10 +174,18 @@ export default function HomePage() {
                         borderRadius: "8px",
                         fontSize: "1rem",
                         transition: "border-color 0.3s ease",
-                        outline: "none"
+                        outline: "none",
+                        color: "#1e3c72", 
+                        backgroundColor: "white"
                       }}
-                      onFocus={(e) => e.target.style.borderColor = "#1e3c72"}
-                      onBlur={(e) => e.target.style.borderColor = "#e3f2fd"}
+                      onFocus={(e) => {
+                        e.target.style.borderColor = "#1e3c72";
+                        e.target.style.color = "#1e3c72";
+                      }}
+                      onBlur={(e) => {
+                        e.target.style.borderColor = "#e3f2fd";
+                        e.target.style.color = "#1e3c72";
+                      }}
                     />
                   </div>
                 ))}
@@ -147,27 +193,34 @@ export default function HomePage() {
 
               <button
                 type="submit"
+                disabled={!isFormValid}
                 style={{
                   width: "100%",
                   padding: "15px",
-                  backgroundColor: "#1e3c72",
+                  backgroundColor: isFormValid ? "#1e3c72" : "#cccccc",
                   color: "white",
                   border: "none",
                   borderRadius: "8px",
                   fontSize: "1.1rem",
                   fontWeight: "600",
-                  cursor: "pointer",
+                  cursor: isFormValid ? "pointer" : "not-allowed",
                   transition: "all 0.3s ease",
-                  boxShadow: "0 4px 15px rgba(30, 60, 114, 0.3)"
+                  boxShadow: isFormValid ? "0 4px 15px rgba(30, 60, 114, 0.3)" : "0 2px 8px rgba(0, 0, 0, 0.1)",
+                  opacity: isFormValid ? 1 : 0.6
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = "#2a5298";
-                  e.currentTarget.style.transform = "translateY(-2px)";
+                  if (isFormValid) {
+                    e.currentTarget.style.backgroundColor = "#2a5298";
+                    e.currentTarget.style.transform = "translateY(-2px)";
+                  }
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = "#1e3c72";
-                  e.currentTarget.style.transform = "translateY(0)";
+                  if (isFormValid) {
+                    e.currentTarget.style.backgroundColor = "#1e3c72";
+                    e.currentTarget.style.transform = "translateY(0)";
+                  }
                 }}
+                title={!isFormValid ? "Please fill in all required fields" : ""}
               >
                 Predict MVP Chances
               </button>
@@ -209,7 +262,6 @@ export default function HomePage() {
         }}>
           <ChatInterface
             predictionData={predictionData}
-            explanationData={explanationData}
           />
         </div>
       </div>
